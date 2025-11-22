@@ -52,3 +52,4 @@ public class SampleDataLoader implements CommandLineRunner {
         orderRepository.saveAll(Arrays.asList(order1, order2, order3));
     }
 }
+
