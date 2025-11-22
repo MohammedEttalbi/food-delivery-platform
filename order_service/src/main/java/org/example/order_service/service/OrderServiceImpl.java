@@ -2,15 +2,13 @@ package org.example.order_service.service;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.example.order_service.dto.AddItemRequest;
 import org.example.order_service.dto.CreateOrderRequest;
 import org.example.order_service.dto.OrderResponse;
+import org.example.order_service.dto.Restaurant;
+import org.example.order_service.client.RestaurantServiceClient;
 import org.example.order_service.mapper.OrderMapper;
-import org.example.order_service.model.MenuItem;
 import org.example.order_service.model.Order;
-import org.example.order_service.model.OrderItem;
 import org.example.order_service.model.OrderStatus;
-import org.example.order_service.repository.MenuItemRepository;
 import org.example.order_service.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
@@ -23,8 +21,8 @@ import java.util.List;
 public class OrderServiceImpl implements OrderService {
 
     private final OrderRepository orderRepository;
-    private final MenuItemRepository menuItemRepository;
     private final OrderMapper orderMapper;
+    private final RestaurantServiceClient restaurantClient;
 
     @Override
     public OrderResponse createOrder(CreateOrderRequest request) {
@@ -32,49 +30,28 @@ public class OrderServiceImpl implements OrderService {
         Order order = new Order();
 
         order.setCustomerId(request.getCustomerId());
-        order.setRestaurantId(request.getRestaurantId());
+        if (request.getRestaurant() == null || request.getRestaurant().getId() == null) {
+            throw new RuntimeException("Restaurant must be provided with a valid id");
+        }
+        // Validate restaurant existence via restaurant-service before creating the order
+        Long restaurantId = request.getRestaurant().getId();
+        try {
+            // If the restaurant doesn't exist, the client should throw an error (e.g., 404)
+            restaurantClient.getRestaurantById(restaurantId);
+        } catch (Exception e) {
+            throw new RuntimeException("Restaurant not found");
+        }
+        // persist only the restaurant id
+        order.setRestaurantId(restaurantId);
         order.setStatus(OrderStatus.PENDING);
         order.setCreatedAt(LocalDateTime.now());
 
         order = orderRepository.save(order);
 
-        return orderMapper.toResponse(order);
+        OrderResponse response = orderMapper.toResponse(order);
+        response.setRestaurant(fetchRestaurant(order.getRestaurantId()));
+        return response;
     }
-
-
-    @Override
-    public OrderResponse addItemToOrder(Long orderId, AddItemRequest request) {
-
-        Order order = getOrder(orderId);
-
-        MenuItem menuItem = menuItemRepository.findById(request.getMenuItemId())
-                .orElseThrow(() -> new RuntimeException("Menu item not found"));
-
-        OrderItem item = new OrderItem();
-
-        item.setMenuItem(menuItem);
-        item.setQuantity(request.getQuantity());
-        item.setPrice(menuItem.getPrice() * request.getQuantity());
-        item.setOrder(order);
-
-        order.getItems().add(item);
-        order.updateTotalPrice();
-
-        return orderMapper.toResponse(orderRepository.save(order));
-    }
-
-
-    @Override
-    public OrderResponse removeItemFromOrder(Long orderId, Long itemId) {
-
-        Order order = getOrder(orderId);
-
-        order.removeItem(itemId);
-        order.updateTotalPrice();
-
-        return orderMapper.toResponse(orderRepository.save(order));
-    }
-
 
     @Override
     public OrderResponse updateOrderStatus(Long orderId, OrderStatus status) {
@@ -82,38 +59,45 @@ public class OrderServiceImpl implements OrderService {
         Order order = getOrder(orderId);
         order.setStatus(status);
 
-        return orderMapper.toResponse(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        OrderResponse response = orderMapper.toResponse(saved);
+        response.setRestaurant(fetchRestaurant(saved.getRestaurantId()));
+        return response;
     }
 
 
     @Override
     public OrderResponse getOrderById(Long id) {
 
-        return orderMapper.toResponse(getOrder(id));
+        Order order = getOrder(id);
+        OrderResponse response = orderMapper.toResponse(order);
+        response.setRestaurant(fetchRestaurant(order.getRestaurantId()));
+        return response;
     }
 
 
     @Override
     public List<OrderResponse> getOrdersForCustomer(Long customerId) {
 
-        return orderMapper.toResponseList(orderRepository.findByCustomerId(customerId));
+        List<Order> orders = orderRepository.findByCustomerId(customerId);
+        List<OrderResponse> responses = orderMapper.toResponseList(orders);
+        // attach restaurant details
+        for (int i = 0; i < orders.size(); i++) {
+            responses.get(i).setRestaurant(fetchRestaurant(orders.get(i).getRestaurantId()));
+        }
+        return responses;
     }
 
 
     @Override
     public List<OrderResponse> getOrdersByRestaurant(Long restaurantId) {
 
-        return orderMapper.toResponseList(orderRepository.findByRestaurantId(restaurantId));
-    }
-
-
-    @Override
-    public OrderResponse calculateTotal(Long orderId) {
-
-        Order order = getOrder(orderId);
-        order.updateTotalPrice();
-
-        return orderMapper.toResponse(orderRepository.save(order));
+        List<Order> orders = orderRepository.findByRestaurantId(restaurantId);
+        List<OrderResponse> responses = orderMapper.toResponseList(orders);
+        for (int i = 0; i < orders.size(); i++) {
+            responses.get(i).setRestaurant(fetchRestaurant(orders.get(i).getRestaurantId()));
+        }
+        return responses;
     }
 
 
@@ -121,6 +105,19 @@ public class OrderServiceImpl implements OrderService {
 
         return orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
+    }
+
+    private Restaurant fetchRestaurant(Long restaurantId) {
+        try {
+            return restaurantClient.getRestaurantById(restaurantId);
+        } catch (Exception e) {
+            // degrade gracefully if restaurant service is unavailable
+            Restaurant fallback = new Restaurant();
+            fallback.setId(restaurantId);
+            fallback.setName("Unknown");
+            fallback.setAddress(null);
+            return fallback;
+        }
     }
 }
 

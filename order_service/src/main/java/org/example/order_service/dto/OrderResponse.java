@@ -17,9 +17,8 @@ public class OrderResponse {
 
     private Long id;
     private Long customerId;
-    private Long restaurantId;
-    private List<OrderItemResponse> items;
-    private Double totalPrice;
+    // Expose full Restaurant details fetched from restaurant_service
+    private Restaurant restaurant;
     private OrderStatus status;
     private LocalDateTime createdAt;
 }
