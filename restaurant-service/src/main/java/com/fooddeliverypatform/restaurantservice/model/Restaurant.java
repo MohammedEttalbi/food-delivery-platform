@@ -22,3 +22,4 @@ public class Restaurant {
     @OneToMany(mappedBy = "restaurant", cascade = CascadeType.ALL)
     private List<Menu> menus=new ArrayList<Menu>();
 }
+
