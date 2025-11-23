@@ -4,8 +4,8 @@ import org.example.order_service.dto.OrderResponse;
 import org.example.order_service.model.Order;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-
 import java.util.List;
+
 
 @Mapper(componentModel = "spring")
 public interface OrderMapper {
@@ -16,3 +16,4 @@ public interface OrderMapper {
 
     List<OrderResponse> toResponseList(List<Order> orders);
 }
+
