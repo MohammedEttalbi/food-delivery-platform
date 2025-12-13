@@ -8,7 +8,6 @@ import org.example.order_service.model.OrderStatus;
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -20,6 +19,7 @@ public class OrderResponse {
     // Expose full Restaurant details fetched from restaurant_service
     private Restaurant restaurant;
     private OrderStatus status;
+    private Double totalAmount;
+    private String deliveryAddress;
     private LocalDateTime createdAt;
 }
-

@@ -1,6 +1,5 @@
 package com.fooddeliverypatform.deliveryservice.controller;
 
-
 import com.fooddeliverypatform.deliveryservice.dto.DeliveryDTO;
 import com.fooddeliverypatform.deliveryservice.dto.DeliveryRequestDTO;
 import com.fooddeliverypatform.deliveryservice.model.DeliveryStatus;
@@ -16,7 +15,6 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/deliveries")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class DeliveryController {
 
     private final DeliveryService deliveryService;

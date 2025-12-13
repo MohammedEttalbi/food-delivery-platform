@@ -6,7 +6,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-
 @Getter
 @Setter
 @NoArgsConstructor
@@ -18,5 +17,8 @@ public class CreateOrderRequest {
     @NotNull
     @Valid
     private Restaurant restaurant;
-}
 
+    private Double totalAmount;
+
+    private String deliveryAddress;
+}

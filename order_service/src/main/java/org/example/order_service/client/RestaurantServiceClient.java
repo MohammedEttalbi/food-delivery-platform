@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 /**
  * OpenFeign client for interacting with the Restaurant service (port 8085 by default).
  */
-@FeignClient(name = "restaurant-service", url = "${restaurant.service.url:http://localhost:8085}")
+@FeignClient(name = "restaurant-service", url = "${restaurant.service.url:http://localhost:8081}")
 public interface RestaurantServiceClient {
 
     @GetMapping("/restaurants/{id}")

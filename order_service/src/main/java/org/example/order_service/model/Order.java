@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDateTime;
 
-
 @Entity
 @Table(name = "orders")
 @Getter
@@ -22,12 +21,16 @@ public class Order {
 
     private Long customerId;
 
-    // Keep only the identifier to avoid depending on Restaurant entity, per requirements
+    // Keep only the identifier to avoid depending on Restaurant entity, per
+    // requirements
     private Long restaurantId;
 
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
+    private Double totalAmount;
+
+    private String deliveryAddress;
+
     private LocalDateTime createdAt;
 }
-

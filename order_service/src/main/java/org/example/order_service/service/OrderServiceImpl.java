@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.List;
 
-
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -33,7 +32,8 @@ public class OrderServiceImpl implements OrderService {
         if (request.getRestaurant() == null || request.getRestaurant().getId() == null) {
             throw new RuntimeException("Restaurant must be provided with a valid id");
         }
-        // Validate restaurant existence via restaurant-service before creating the order
+        // Validate restaurant existence via restaurant-service before creating the
+        // order
         Long restaurantId = request.getRestaurant().getId();
         try {
             // If the restaurant doesn't exist, the client should throw an error (e.g., 404)
@@ -44,6 +44,8 @@ public class OrderServiceImpl implements OrderService {
         // persist only the restaurant id
         order.setRestaurantId(restaurantId);
         order.setStatus(OrderStatus.PENDING);
+        order.setTotalAmount(request.getTotalAmount());
+        order.setDeliveryAddress(request.getDeliveryAddress());
         order.setCreatedAt(LocalDateTime.now());
 
         order = orderRepository.save(order);
@@ -65,7 +67,6 @@ public class OrderServiceImpl implements OrderService {
         return response;
     }
 
-
     @Override
     public OrderResponse getOrderById(Long id) {
 
@@ -74,7 +75,6 @@ public class OrderServiceImpl implements OrderService {
         response.setRestaurant(fetchRestaurant(order.getRestaurantId()));
         return response;
     }
-
 
     @Override
     public List<OrderResponse> getOrdersForCustomer(Long customerId) {
@@ -88,7 +88,6 @@ public class OrderServiceImpl implements OrderService {
         return responses;
     }
 
-
     @Override
     public List<OrderResponse> getOrdersByRestaurant(Long restaurantId) {
 
@@ -99,7 +98,6 @@ public class OrderServiceImpl implements OrderService {
         }
         return responses;
     }
-
 
     private Order getOrder(Long id) {
 
@@ -120,4 +118,3 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 }
-
